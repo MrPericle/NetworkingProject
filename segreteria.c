@@ -102,7 +102,7 @@ int main() {
         }
         pid_t pid = fork();
          if (pid == -1) {
-            error("Errore nella creazione del processo figlio");
+            perror("Errore nella creazione del processo figlio");
         } else if (pid == 0) {
             close(server_socket);
             // Ricevi il tipo di richiesta dallo studente
