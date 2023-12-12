@@ -2,15 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
+#include "wrapper.h"
+
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 12345
 #define LOCAL_PORT 54321
 #define SOCKET int
 
-void request_exam_dates(SOCKET student_socket) {
-    
+void request_exam_dates(SOCKET student_socket, const char* course) {
     // Richiedi al server universitario le date degli esami
     SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -25,14 +29,18 @@ void request_exam_dates(SOCKET student_socket) {
     }
 
     char request_type[] = "REQUEST_EXAM_DATES";
-    write(client_socket, request_type, sizeof(request_type));
+    FullWrite(client_socket, request_type, sizeof(request_type));
+    printf("Request forwarded to server");
+    sleep(3);
+    FullWrite(client_socket, course, strlen(course));
+    printf("Course forwarded to server\n");
 
     // Ricevi le date degli esami disponibili dal server universitario
     char exam_dates[500];
-    read(client_socket, exam_dates, sizeof(exam_dates));
-
+    int nread = read(client_socket, exam_dates, sizeof(exam_dates));
+    exam_dates[nread] = '\0';
     // Inoltra le date al client studente
-    write(student_socket, exam_dates, strlen(exam_dates));
+    FullWrite(student_socket, exam_dates, strlen(exam_dates));
 
     close(client_socket);
 }
@@ -52,13 +60,15 @@ void forward_exam_reservation(int student_socket, const char* course) {
     }
 
     char request_type[] = "RESERVE_EXAM";
-    write(client_socket, request_type, sizeof(request_type));
-    write(client_socket, course, strlen(course));
+    printf("%s", course);
+    FullWrite(client_socket, request_type, sizeof(request_type));
+    sleep(3);
+    FullWrite(client_socket, course, strlen(course));
 
     // Ricevi e inoltra la conferma della prenotazione al client studente
     char confirmation[50];
     read(client_socket, confirmation, sizeof(confirmation));
-    write(student_socket, confirmation, strlen(confirmation));
+    FullWrite(student_socket, confirmation, strlen(confirmation));
 
     close(client_socket);
 }
@@ -68,68 +78,97 @@ int main() {
     struct sockaddr_in server_address, client_address;
     socklen_t client_address_len = sizeof(client_address);
 
-    // Inizializza il socket
+    // Inizializza il socket del server e gestisci eventuali errori
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
-        perror("Errore nella creazione del socket");
+        perror("Errore nella creazione del socket del server");
         exit(EXIT_FAILURE);
     }
 
-    // Configura l'indirizzo del server
+    // Inizializza l'indirizzo del server
+    memset(&server_address, 0, sizeof(server_address));
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(LOCAL_PORT);
 
-    // Associa il socket all'indirizzo e alla porta
-    if (bind(server_socket, (struct sockaddr*)&server_address, sizeof(server_address)) < 0) {
-        perror("Errore nell'associazione del socket all'indirizzo e alla porta");
+    // Lega il socket del server all'indirizzo del server
+    if (bind(server_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+        perror("Errore nella bind del socket del server");
         exit(EXIT_FAILURE);
     }
 
-    // Mette il server in ascolto
-    if (listen(server_socket, 1) < 0) {
-        perror("Errore nell'inizializzazione dell'ascolto del socket");
+    // Inizia ad ascoltare le connessioni in entrata
+    if (listen(server_socket, 5) == -1) {
+        perror("Errore nella listen del socket del server");
         exit(EXIT_FAILURE);
     }
-
-    printf("Segreteria in ascolto sulla porta %d...\n", LOCAL_PORT);
 
     while (1) {
-        
         // Accetta una connessione dallo studente
         client_socket = accept(server_socket, (struct sockaddr*)&client_address, &client_address_len);
         if (client_socket == -1) {
             perror("Errore nell'accettazione della connessione dello studente");
             continue;
         }
+
         pid_t pid = fork();
-         if (pid == -1) {
+        if (pid == -1) {
             perror("Errore nella creazione del processo figlio");
         } else if (pid == 0) {
-            close(server_socket);
-            // Ricevi il tipo di richiesta dallo studente
-            char request_type[20];
-            read(client_socket, request_type, sizeof(request_type));
+            close(server_socket);  // Chiudi il socket del server nel processo figlio
+            printf("Child handling request\n");
+
+            // Leggi il tipo di richiesta dallo studente
+            char request_type[30];
+            char course[100];
+            ssize_t bytes_read;
+
+            // Leggi il tipo di richiesta
+            bytes_read = read(client_socket, request_type, sizeof(request_type));
+            if(!bytes_read){
+                printf("client closed connection\n");
+                close(client_socket);
+            }
+            else printf("Reading request type %s\n", request_type);
+
+            // Leggi il corso
+            bytes_read = read(client_socket, course, sizeof(course));
+            if(!bytes_read){
+                printf("client closed connection\n");
+                close(client_socket);
+            }
+            else {
+                course[bytes_read] = '\0';
+                printf("Reading course: %s\n", course);
+                
+            };
 
             if (strcmp(request_type, "REQUEST_EXAM_DATES") == 0) {
                 // Gestisci la richiesta di date degli esami
-                request_exam_dates(client_socket);
+                printf("request 1 sent\n");
+                printf("strlen in server %lu\n",strlen(course));
+                request_exam_dates(client_socket, course);
             } else if (strcmp(request_type, "RESERVE_EXAM") == 0) {
                 // Ricevi il corso per la prenotazione e inoltralo al server universitario
-                char course[50];
-                read(client_socket, course, sizeof(course));
-                forward_exam_reservation(client_socket,course);
+                printf("request 2 sent\n");
+                forward_exam_reservation(client_socket, course);
             }
-        
+            else{
+                perror("Unrecognized request");
+                exit(EXIT_FAILURE);
+            }
+
             // Chiudi la connessione con lo studente corrente
             close(client_socket);
-            exit(0);
+            exit(EXIT_SUCCESS);
+        } else {
+            close(client_socket);  // Chiudi il socket del client nel processo padre
         }
-        else close(client_socket);
     }
 
-    // Chiudi il socket del server
+    // Chiudi il socket del server (questo punto potrebbe non essere mai raggiunto)
     close(server_socket);
 
     return 0;
 }
+
