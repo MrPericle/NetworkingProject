@@ -10,6 +10,7 @@
 #define SOCKET int
 
 void request_exam_dates(SOCKET student_socket) {
+    
     // Richiedi al server universitario le date degli esami
     SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -94,6 +95,7 @@ int main() {
     printf("Segreteria in ascolto sulla porta %d...\n", LOCAL_PORT);
 
     while (1) {
+        
         // Accetta una connessione dallo studente
         client_socket = accept(server_socket, (struct sockaddr*)&client_address, &client_address_len);
         if (client_socket == -1) {
