@@ -13,6 +13,7 @@
 #define SOCKET int
 
 void request_exam_availability(char course[]) {
+    
     // Richiedi al server se ci sono esami disponibili per un corso
     SOCKET client_socket = socket(AF_INET, SOCK_STREAM, 0);
     int byteRead = 0;
@@ -72,6 +73,7 @@ void reserve_exam(const char* course) {
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
     FullWrite(client_socket, course, sizeof(course));
+
     // Ricevi e stampa la conferma della prenotazione
     char confirmation[50];
     byteRead =  read(client_socket, confirmation, sizeof(confirmation));

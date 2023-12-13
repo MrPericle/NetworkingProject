@@ -23,6 +23,8 @@ int num_exams = 0;
 int num_prenot = 0;
 int* prenot_ptr = &num_prenot;
 
+void handle_exam_add();
+
 void load_exams_from_file() {
     FILE *file = fopen("exams.txt", "r");
     if (file == NULL) {
@@ -40,16 +42,17 @@ void load_exams_from_file() {
     fclose(file);
 }
 
-void add_exam(const char* course, const char* date) {
+void add_exam(SOCKET client_socket, const char* course, const char* date) {
     if (num_exams < MAX_EXAMS) {
         strcpy(exams[num_exams].course, course);
         strcpy(exams[num_exams].exam_date, date);
-        num_exams++;
     }
+
+    handle_exam_add(client_socket);
 }
 
-void handle_exam_request(int client_socket,char* course) {
-    // Invia al client le date degli esami disponibili (simulato)
+void handle_exam_request(SOCKET client_socket,char* course) {
+    // Invia al client le date degli esami disponibili 
     char exam_dates[500] = "";
     for (int i = 0; i < num_exams; ++i) {
         if(strcmp(exams[i].course,course) == 0){
@@ -62,7 +65,7 @@ void handle_exam_request(int client_socket,char* course) {
     write(client_socket, exam_dates, strlen(exam_dates));
 }
 
-void handle_exam_reservation(int client_socket, const char* course) {
+void handle_exam_reservation(SOCKET client_socket, const char* course) {
     // Gestisci la prenotazione dell'esame (simulato)
     // Qui potresti implementare la logica di gestione delle prenotazioni effettive
     // Ad esempio, salva la prenotazione su un file
@@ -77,6 +80,35 @@ void handle_exam_reservation(int client_socket, const char* course) {
     fclose(reservation_file);
 
     write(client_socket, "Prenotazione effettuata con successo!\0", 38);
+}
+
+
+void handle_exam_add(SOCKET client_socket){
+
+    //aggiungi esame al file
+    FILE *file = fopen("exams.txt", "a");
+    if (file == NULL) {
+        perror("Errore nell'apertura del file degli esami");
+        exit(EXIT_FAILURE);
+    }
+
+    // Verifica se c'è spazio sufficiente per aggiungere un esame
+    if (num_exams >= MAX_EXAMS) {
+        fprintf(stderr, "Errore: Il numero massimo di esami è stato raggiunto\n");
+        fclose(file);
+        exit(EXIT_FAILURE);
+    }
+
+    // Scrivi il nuovo esame nel file
+    fprintf(file, "%s %s\n", exams[num_exams].course, exams[num_exams].exam_date);
+
+    // Incrementa il numero di esami e chiudi il file
+    num_exams++;
+
+    write(client_socket, "Esame aggiunto con successo!\0", 30);
+
+    fclose(file);
+
 }
 
 int main(){
@@ -142,7 +174,9 @@ int main(){
             // Ricevi il tipo di richiesta dal client
             char request_type[30];
             char course[100];
+            char date[100];
             ssize_t bytes_read;
+            ssize_t bytes_read2;
 
             // Leggi il tipo di richiesta
             bytes_read = read(client_socket, request_type, sizeof(request_type));
@@ -167,11 +201,21 @@ int main(){
                 
             };
             if (strcmp(request_type, "REQUEST_EXAM_DATES") == 0) {
+
                 // Gestisci la richiesta di date degli esami
                 handle_exam_request(client_socket,course);
+
             } else if (strcmp(request_type, "RESERVE_EXAM") == 0) {
+
                 // Gestisci la prenotazione dell'esame
                 handle_exam_reservation(client_socket,course);
+
+            }else if(strcmp(request_type, "ADD_EXAM") == 0){
+
+                bytes_read2 = read(client_socket, date, sizeof(date));
+                printf("\ndata: %s \n", date);
+                add_exam(client_socket, course, date);
+
             }
             else{
                 perror("Request unknown");
