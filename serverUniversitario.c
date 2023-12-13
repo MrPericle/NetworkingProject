@@ -20,6 +20,8 @@ typedef struct {
 
 Exam exams[MAX_EXAMS];
 int num_exams = 0;
+int num_prenot = 0;
+int* prenot_ptr = &num_prenot;
 
 void load_exams_from_file() {
     FILE *file = fopen("exams.txt", "r");
@@ -70,7 +72,7 @@ void handle_exam_reservation(int client_socket, const char* course) {
         return;
     }
 
-    fprintf(reservation_file, "Studente %d ha prenotato l'esame di %s\n", client_socket, course);
+    fprintf(reservation_file, "Prenotato %d ha prenotato l'esame di %s\n", *(prenot_ptr)++, course);
 
     fclose(reservation_file);
 

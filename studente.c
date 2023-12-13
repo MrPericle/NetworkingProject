@@ -20,10 +20,14 @@ void request_exam_availability(char course[]) {
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr(SERVER_IP);
     server_address.sin_port = htons(PORT);
-
-    if (connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
-        perror("Errore nella connessione al server");
-        exit(EXIT_FAILURE);
+    int tentativo = 0;
+    while (connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+        printf("Connection failed, retry...\n");
+        if(++tentativo == 3){
+            tentativo = 0;
+            printf("waiting random time...\n");
+            sleep(rand()%5);
+        }
     }
     printf("Connection with server done\n");
     char request_type[] = "REQUEST_EXAM_DATES";
