@@ -63,11 +63,22 @@ void reserve_exam(const char* course) {
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = inet_addr(SERVER_IP);
     server_address.sin_port = htons(PORT);
+    int tentativo = 0;
 
-    if (connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
-        perror("Errore nella connessione al server");
-        exit(EXIT_FAILURE);
-    }
+    // int connectTry = connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address));
+    // while (connectTry == -1) {
+    //     printf("Connection failed, retry...\n");
+    //     if(++tentativo == 3){
+    //         tentativo = 0;
+    //         printf("waiting random time...\n");
+    //         sleep(rand()%5);
+    //     }
+    //     connectTry = connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address));
+    //     if(connectTry == 0){
+    //         printf("Connection done");
+    //         break;
+    //     }
+    // }
 
     char request_type[] = "RESERVE_EXAM";
     FullWrite(client_socket, request_type, sizeof(request_type));
@@ -75,7 +86,7 @@ void reserve_exam(const char* course) {
     FullWrite(client_socket, course, sizeof(course));
 
     // Ricevi e stampa la conferma della prenotazione
-    char confirmation[50];
+    char confirmation[100];
     byteRead =  read(client_socket, confirmation, sizeof(confirmation));
     confirmation[byteRead] = '\0';
     printf("%s", confirmation);

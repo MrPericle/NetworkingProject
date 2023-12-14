@@ -71,8 +71,9 @@ void forward_exam_reservation(int student_socket, const char *course)
     FullWrite(client_socket, course, strlen(course));
 
     // Ricevi e inoltra la conferma della prenotazione al client studente
-    char confirmation[50];
-    read(client_socket, confirmation, sizeof(confirmation));
+    char confirmation[100];
+    int bRead = read(client_socket, confirmation, sizeof(confirmation));
+    confirmation[bRead] = '\0';
     FullWrite(student_socket, confirmation, strlen(confirmation));
 
     close(client_socket);
@@ -107,7 +108,7 @@ void add_exam(const char *course, const char *date)
     FullWrite(client_socket, date, sizeof(date));
 
     // Ricevi conferma dell'aggiunta con successo
-    char confirmation[50];
+    char confirmation[100];
     byteRead = read(client_socket, confirmation, sizeof(confirmation));
 
     if (byteRead == 0)
@@ -151,7 +152,7 @@ int main()
     }
 
     // Inizia ad ascoltare le connessioni in entrata
-    if (listen(server_socket, 5) == -1)
+    if (listen(server_socket, 1) == -1)
     {
         perror("Errore nella listen del socket del server");
         exit(EXIT_FAILURE);

@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 #include "wrapper.h"
 
 #define PORT 12345
@@ -21,9 +23,15 @@ typedef struct {
 Exam exams[MAX_EXAMS];
 int num_exams = 0;
 int num_prenot = 0;
-int* prenot_ptr = &num_prenot;
+int *num_prenot_pt = &num_prenot;
 
-void handle_exam_add();
+void handler(int sigum){
+    if(sigum == SIGUSR1){
+        (*num_prenot_pt)++;
+    }
+}
+
+void handle_exam_add(SOCKET);
 
 void load_exams_from_file() {
     FILE *file = fopen("exams.txt", "r");
@@ -69,17 +77,20 @@ void handle_exam_reservation(SOCKET client_socket, const char* course) {
     // Gestisci la prenotazione dell'esame (simulato)
     // Qui potresti implementare la logica di gestione delle prenotazioni effettive
     // Ad esempio, salva la prenotazione su un file
+    char buffer[100];
     FILE *reservation_file = fopen("reservations.txt", "a");
     if (reservation_file == NULL) {
         perror("Errore nell'apertura del file delle prenotazioni");
         return;
     }
+    kill(getppid(),SIGUSR1);
 
-    fprintf(reservation_file, "Prenotato %d ha prenotato l'esame di %s\n", *(prenot_ptr)++, course);
-
+    fprintf(reservation_file, "Prenotato %d ha prenotato l'esame di %s\n", *num_prenot_pt, course);
     fclose(reservation_file);
 
-    write(client_socket, "Prenotazione effettuata con successo!\0", 38);
+    snprintf(buffer,sizeof(buffer),"Prenotazione effettuata con successo con numero prenotazione %d", *num_prenot_pt);
+    printf("Sending %lu",strlen(buffer));
+    FullWrite(client_socket,buffer, strlen(buffer));
 }
 
 
@@ -112,13 +123,10 @@ void handle_exam_add(SOCKET client_socket){
 }
 
 int main(){
+    signal(SIGUSR1,handler);
     load_exams_from_file();
     printf("loaded exams from file\n");
-    // for (size_t i = 0; i < num_exams; i++)
-    // {
-    //     printf("%s %s\n",exams[i].course,exams[i].exam_date);
-    // }
-    
+ 
     SOCKET server_socket, client_socket;
     struct sockaddr_in server_address, client_address;
     socklen_t client_address_len = sizeof(client_address);
@@ -164,6 +172,7 @@ int main(){
             close(client_socket);
             continue;
         } else if (pid > 0) {
+            wait(NULL);
             // Processo padre - chiude il socket del client e continua ad accettare nuove connessioni
             close(client_socket);
         } else {
