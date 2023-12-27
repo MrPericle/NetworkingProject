@@ -13,124 +13,102 @@
 #define SOCKET int
 #define MAX_RETRY 3
 
-void request_exam_availability(char course[]) {
-    
-    // Richiedi al server se ci sono esami disponibili per un corso
-    SOCKET client_socket; 
-    int byteRead = 0;
-    int tentativo = 0;
+void establish_connection(SOCKET *client_socket) {
+    int attempt = 0;
 
-    while (tentativo < MAX_RETRY){
-        client_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-        struct sockaddr_in server_address;
+    while (attempt < MAX_RETRY) {
+        *client_socket = socket(AF_INET, SOCK_STREAM, 0);
+        struct sockaddr_in server_address = {0};
         server_address.sin_family = AF_INET;
         server_address.sin_addr.s_addr = inet_addr(SERVER_IP);
         server_address.sin_port = htons(PORT);
 
-        if(connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1){
-            printf("Connection failed, retry...\n");
-            close(client_socket);
-            tentativo++;
-            printf("Tentativo n %d\n", tentativo);
+        if (connect(*client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+            printf("Connection failed, retrying...\n");
+            close(*client_socket);
+            attempt++;
 
-            if(tentativo == MAX_RETRY){
+            if (attempt == MAX_RETRY) {
                 int random_time = rand() % 5;
-                printf("Attesa casuale di %d second.\n", random_time);
+                printf("Waiting for %d seconds...\n", random_time);
                 sleep(random_time);
-                // Resetta tentativi
-                tentativo = 0;  
+
+                // Reset attempts
+                attempt = 0;
             }
-        }else{
-            //connessione riuscita, esci dal ciclo
-            printf("Connection done");
+        } else {
+            printf("Connection established\n");
             break;
         }
     }
-    
+}
+
+void request_exam_availability(char course[]) {
+    SOCKET client_socket;
+    int byte_read = 0;
+
+    establish_connection(&client_socket);
 
     char request_type[] = "REQUEST_EXAM_DATES";
     FullWrite(client_socket, request_type, sizeof(request_type));
-    printf("Sending %s\n", request_type);
+    printf("Sending request: %s\n", request_type);
     sleep(3);
     FullWrite(client_socket, course, strlen(course));
-    //printf("written %d char\n",nfwrite);
-    printf("sent request for %s\n",course);
 
-
-    // Ricevi e stampa le date degli esami disponibili per il corso specificato
     char exam_dates[500];
-    byteRead = read(client_socket, exam_dates, sizeof(exam_dates));
-    if(byteRead == 0)
-        printf("Nessuna data disponibile");
-    else if(byteRead > 0){
-        exam_dates[byteRead] = '\0';
-        printf("Date degli esami disponibili per il corso %s:\n%s", course, exam_dates);
-
-    }
-    else perror("read error");
+    byte_read = read(client_socket, exam_dates, sizeof(exam_dates));
+    if (byte_read == 0)
+        printf("No available exam dates for %s\n", course);
+    else if (byte_read > 0) {
+        exam_dates[byte_read] = '\0';
+        printf("Available exam dates for %s:\n%s", course, exam_dates);
+    } else
+        perror("Read error");
 
     close(client_socket);
 }
 
 void reserve_exam(const char* course) {
-    // Richiedi la prenotazione di un esame al server
-    SOCKET client_socket; 
-    int byteRead = 0;
-    int tentativo = 0;
-    
-    
-    while (tentativo < MAX_RETRY) {
-        client_socket = socket(AF_INET, SOCK_STREAM, 0);
-        struct sockaddr_in server_address;
-        server_address.sin_family = AF_INET;
-        server_address.sin_addr.s_addr = inet_addr(SERVER_IP);
-        server_address.sin_port = htons(PORT);
+    SOCKET client_socket;
+    int byte_read = 0;
 
-        if(connect(client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1){
-            printf("Connection failed, retry...\n");
-            close(client_socket);
-            tentativo++;
-            printf("Tentativo n %d\n", tentativo);
-
-            if(tentativo == MAX_RETRY){
-                int random_time = rand() % 5;
-                printf("Attesa casuale di %d secondi...\n", random_time);
-                sleep(random_time);
-
-                //Resetta i tentativi
-                tentativo = 0;
-            }
-        }else{
-            printf("Connection done");
-            break;   
-        }
-        
-    }
+    establish_connection(&client_socket);
 
     char request_type[] = "RESERVE_EXAM";
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
-    FullWrite(client_socket, course, sizeof(course));
+    FullWrite(client_socket, course, strlen(course));
 
-    // Ricevi e stampa la conferma della prenotazione
     char confirmation[100];
-    byteRead =  read(client_socket, confirmation, sizeof(confirmation));
-    confirmation[byteRead] = '\0';
-    printf("%s", confirmation);
+    byte_read =  read(client_socket, confirmation, sizeof(confirmation));
+    confirmation[byte_read] = '\0';
+    printf("Reservation confirmation: %s", confirmation);
 
     close(client_socket);
 }
 
 int main() {
-    // Esempio di utilizzo
-    // TODO: menù scelta operazione
-    //char course_to_check[] = "Matematica\0";
+    int choice;
+    printf("1. Request Exam Availability\n");
+    printf("2. Reserve Exam\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
 
-    //request_exam_availability(course_to_check);
-
-    char course_to_reserve[] = "Fisica";
-    reserve_exam(course_to_reserve);
+    switch (choice) {
+        case 1: {
+            char course_to_check[] = "Math";
+            request_exam_availability(course_to_check);
+            break;
+        }
+        case 2: {
+            char course_to_reserve[] = "Physics";
+            reserve_exam(course_to_reserve);
+            break;
+        }
+        default:
+            printf("Invalid choice\n");
+            break;
+    }
 
     return 0;
 }
