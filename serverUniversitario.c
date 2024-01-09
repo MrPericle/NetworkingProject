@@ -22,7 +22,7 @@ typedef struct {
 
 Exam exams[MAX_EXAMS];
 int num_exams = 0;
-int num_prenot = 0;
+int num_prenot = 1;
 int *num_prenot_pt = &num_prenot;
 
 void handler(int sigum){
@@ -80,15 +80,15 @@ void handle_exam_reservation(SOCKET client_socket, const char* course) {
     char buffer[100];
     FILE *reservation_file = fopen("reservations.txt", "a");
     if (reservation_file == NULL) {
-        perror("Errore nell'apertura del file delle prenotazioni");
+        perror("\nErrore nell'apertura del file delle prenotazioni");
         return;
     }
     kill(getppid(),SIGUSR1);
 
-    fprintf(reservation_file, "Prenotato %d ha prenotato l'esame di %s\n", *num_prenot_pt, course);
+    fprintf(reservation_file, "\nPrenotato %d ha prenotato l'esame di %s\n", *num_prenot_pt, course);
     fclose(reservation_file);
 
-    snprintf(buffer,sizeof(buffer),"Prenotazione effettuata con successo con numero prenotazione %d", *num_prenot_pt);
+    snprintf(buffer,sizeof(buffer),"\nNumero prenotazione %d", *num_prenot_pt);
     printf("Sending %lu",strlen(buffer));
     FullWrite(client_socket,buffer, strlen(buffer));
 }
@@ -105,7 +105,7 @@ void handle_exam_add(SOCKET client_socket){
 
     // Verifica se c'è spazio sufficiente per aggiungere un esame
     if (num_exams >= MAX_EXAMS) {
-        fprintf(stderr, "Errore: Il numero massimo di esami è stato raggiunto\n");
+        fprintf(stderr, "\nErrore: Il numero massimo di esami è stato raggiunto\n");
         fclose(file);
         exit(EXIT_FAILURE);
     }
@@ -116,7 +116,7 @@ void handle_exam_add(SOCKET client_socket){
     // Incrementa il numero di esami e chiudi il file
     num_exams++;
 
-    write(client_socket, "Esame aggiunto con successo!\0", 30);
+    write(client_socket, "\nEsame aggiunto con successo!\0", 30);
 
     fclose(file);
 
@@ -195,7 +195,7 @@ int main(){
             }
             else{
                 request_type[bytes_read] = '\0';
-                printf("Reading request type %s\n", request_type);
+                printf("\nReading request type %s\n", request_type);
             } 
 
             // Leggi il corso
@@ -206,7 +206,7 @@ int main(){
             }
             else {
                 course[bytes_read] = '\0';
-                printf("Reading course: %s\n", course);
+                printf("\nReading course: %s\n", course);
                 
             };
             if (strcmp(request_type, "REQUEST_EXAM_DATES") == 0) {
@@ -227,7 +227,7 @@ int main(){
 
             }
             else{
-                perror("Request unknown");
+                perror("\nRequest unknown");
                 exit(EXIT_FAILURE);
             }
 

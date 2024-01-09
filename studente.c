@@ -89,25 +89,32 @@ void reserve_exam(const char* course) {
 
 int main() {
     int choice;
-    printf("1. Request Exam Availability\n");
-    printf("2. Reserve Exam\n");
-    printf("Enter your choice: ");
-    scanf("%d", &choice);
+    
+    while(1){
+        printf("\n\n1. Request Exam Availability: \n");
+        printf("2. Reserve Exam\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
 
-    switch (choice) {
-        case 1: {
-            char course_to_check[] = "Math";
-            request_exam_availability(course_to_check);
-            break;
+        switch (choice) {
+            case 1: {
+                char course_to_check[50];
+                printf("\nInserisci nome esame: ");
+                scanf("%s",course_to_check);
+                request_exam_availability(course_to_check);
+                break;
+            }
+            case 2: {
+                char course_to_reserve[50];
+                printf("\nInserisci il nome dell'esame: ");
+                scanf("%s",course_to_reserve);
+                reserve_exam(course_to_reserve);
+                break;
+            }
+            default:
+                printf("Invalid choice\n");
+                break;
         }
-        case 2: {
-            char course_to_reserve[] = "Physics";
-            reserve_exam(course_to_reserve);
-            break;
-        }
-        default:
-            printf("Invalid choice\n");
-            break;
     }
 
     return 0;

@@ -1,2 +1,5 @@
-Studente 4 ha prenotato l'esame di Fisica
-Studente 4 ha prenotato l'esame di Fisica
+
+
+Prenotato 1 ha prenotato l'esame di Sistemi
+
+Prenotato 2 ha prenotato l'esame di Sistemi

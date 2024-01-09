@@ -191,7 +191,7 @@ int main()
                 close(client_socket);
             }
             else
-                printf("Reading request type %s\n", request_type);
+                printf("\nReading request type %s\n", request_type);
 
             // Leggi il corso
             bytes_read = read(client_socket, course, sizeof(course));
@@ -203,7 +203,7 @@ int main()
             else
             {
                 course[bytes_read] = '\0';
-                printf("Reading course: %s\n", course);
+                printf("\nReading course: %s\n", course);
             };
 
             if (strcmp(request_type, "REQUEST_EXAM_DATES") == 0)
@@ -229,7 +229,7 @@ int main()
             }
 
             // Chiudi la connessione con lo studente corrente
-            close(client_socket);
+            //close(client_socket);
             exit(EXIT_SUCCESS);
         }
         else
@@ -244,7 +244,7 @@ int main()
 
                 while (1)
                 {
-                    printf("Vuoi Inserire un nuovo esame?\n [Y/n]: ");
+                    printf("\nVuoi Inserire un nuovo esame?\n [Y/n]: ");
                     scanf("%c", &choice);
 
                     if (choice == 'y')
