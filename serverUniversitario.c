@@ -39,7 +39,7 @@ void load_exams_from_file() {
         perror("Errore nell'apertura del file degli esami");
         exit(EXIT_FAILURE);
     }
-
+    num_exams = 0;
     while (fscanf(file, "%49s %19s", exams[num_exams].course, exams[num_exams].exam_date) == 2) {
         num_exams++;
         if (num_exams >= MAX_EXAMS) {
@@ -61,6 +61,7 @@ void add_exam(SOCKET client_socket, const char* course, const char* date) {
 
 void handle_exam_request(SOCKET client_socket,char* course) {
     // Invia al client le date degli esami disponibili 
+    load_exams_from_file();
     char exam_dates[500] = "";
     for (int i = 0; i < num_exams; ++i) {
         if(strcmp(exams[i].course,course) == 0){
@@ -113,9 +114,10 @@ void handle_exam_add(SOCKET client_socket){
     fprintf(file, "%s %s\n", exams[num_exams].course, exams[num_exams].exam_date);
 
     // Incrementa il numero di esami e chiudi il file
-    num_exams++;
+    load_exams_from_file();
 
     write(client_socket, "\nEsame aggiunto con successo!\0", 30);
+    
 
     fclose(file);
 

@@ -126,6 +126,7 @@ void add_exam(const char *course, const char *date)
 
 int main()
 {
+    int choice;
     SOCKET server_socket, client_socket;
     struct sockaddr_in server_address, client_address;
     socklen_t client_address_len = sizeof(client_address);
@@ -156,6 +157,32 @@ int main()
     {
         perror("Errore nella listen del socket del server");
         exit(EXIT_FAILURE);
+    }
+
+    printf("\nEnter ...\n");
+    printf("1.Add new exam \n");
+    printf("2. Listen to the student\n");
+    printf("Enter your choice: ");
+    scanf("%d", &choice);
+
+    while(choice == 1)
+    {
+        char course[100];
+        char date[100];
+        printf("\nAdd exam: ");
+        scanf("%s", course);
+
+        printf("\nEnter the date in DD/MM/YY format: ");
+        scanf("%s", date);
+
+        add_exam(course, date);
+
+        printf("\n\nEnter ...\n");
+        printf("1. Add again new exam \n");
+        printf("2. Listen to the student\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
     }
 
     while (1)
@@ -229,43 +256,12 @@ int main()
             }
 
             // Chiudi la connessione con lo studente corrente
-            //close(client_socket);
+            close(client_socket);
             exit(EXIT_SUCCESS);
         }
         else
         {
-            int pid_client = fork();
-            if (pid_client == 0)
-            {
-                close(server_socket);
-                char choice;
-                char course[100];
-                char date[100];
-
-                while (1)
-                {
-                    printf("\nVuoi Inserire un nuovo esame?\n [Y/n]: ");
-                    scanf("%c", &choice);
-
-                    if (choice == 'y')
-                    {
-                        printf("\nInserisci l'esame: ");
-                        scanf("%s", course);
-
-                        printf("\nInserisci la data nel formato DD/MM/YY: ");
-                        scanf("%s", date);
-
-                        add_exam(course, date);
-                    }
-                    else
-                    {
-                        sleep(20);
-                    }
-                }
-                close(client_socket);
-            }
-            else
-                close(client_socket);
+            close(client_socket);
         }
     }
 
