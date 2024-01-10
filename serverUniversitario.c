@@ -93,7 +93,6 @@ void handle_exam_reservation(SOCKET client_socket, const char* course) {
     FullWrite(client_socket,buffer, strlen(buffer));
 }
 
-
 void handle_exam_add(SOCKET client_socket){
 
     //aggiungi esame al file
