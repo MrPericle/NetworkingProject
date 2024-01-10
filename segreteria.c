@@ -47,7 +47,7 @@ void request_exam_dates(SOCKET student_socket, const char *course)
     close(client_socket);
 }
 
-void forward_exam_reservation(int student_socket, const char *course)
+void forward_exam_reservation(int student_socket, const char *course, const char *date)
 {
 
     // Inoltra la richiesta di prenotazione al server universitario
@@ -69,6 +69,8 @@ void forward_exam_reservation(int student_socket, const char *course)
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
     FullWrite(client_socket, course, strlen(course));
+    sleep(3);
+    FullWrite(client_socket, date, strlen(date));
 
     // Ricevi e inoltra la conferma della prenotazione al client studente
     char confirmation[100];
@@ -125,7 +127,9 @@ void add_exam(const char *course, const char *date)
 }
 
 int main()
-{
+{   
+    char course[100];
+    char date[100];
     int choice;
     SOCKET server_socket, client_socket;
     struct sockaddr_in server_address, client_address;
@@ -167,8 +171,7 @@ int main()
 
     while(choice == 1)
     {
-        char course[100];
-        char date[100];
+        
         printf("\nAdd exam: ");
         scanf("%s", course);
 
@@ -208,6 +211,7 @@ int main()
             // Leggi il tipo di richiesta dallo studente
             char request_type[30];
             char course[100];
+            char date[50];
             ssize_t bytes_read;
 
             // Leggi il tipo di richiesta
@@ -244,9 +248,20 @@ int main()
             else if (strcmp(request_type, "RESERVE_EXAM") == 0)
             {
 
+                bytes_read = read(client_socket, date, sizeof(date));
+                if (!bytes_read)
+                {
+                    printf("client closed connection\n");
+                    close(client_socket);
+                }
+                else
+                {
+                    date[bytes_read] = '\0';
+                    printf("\nReading date: %s\n", date);
+                };
                 // Ricevi il corso per la prenotazione e inoltralo al server universitario
                 printf("request 2 sent\n");
-                forward_exam_reservation(client_socket, course);
+                forward_exam_reservation(client_socket, course, date);
             }
             else
             {

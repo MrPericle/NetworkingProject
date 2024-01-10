@@ -9,10 +9,12 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include "wrapper.h"
+#include <sys/mman.h>
 
 #define PORT 12345
 #define MAX_CONNECTIONS 5
-#define MAX_EXAMS 100
+#define MAX_DATE 100
+#define MAX_EXAM 30
 #define SOCKET int
 
 typedef struct {
@@ -20,16 +22,20 @@ typedef struct {
     char exam_date[20];
 } Exam;
 
-Exam exams[MAX_EXAMS];
-int num_exams = 0;
-int num_prenot = 1;
-int *num_prenot_pt = &num_prenot;
+typedef struct numPrenot
+{
+    char nome[50];
+    int numP;
+} numPrenot;
 
-void handler(int sigum){
-    if(sigum == SIGUSR1){
-        (*num_prenot_pt)++;
-    }
-}
+
+numPrenot *num_prenot; // Dichiarazione di un puntatore a un array di interi (memoria condivisa)
+
+
+Exam exams[MAX_DATE];
+int num_exams = 0;
+int prenot_index = 0;
+
 
 void handle_exam_add(SOCKET);
 
@@ -42,7 +48,24 @@ void load_exams_from_file() {
     num_exams = 0;
     while (fscanf(file, "%49s %19s", exams[num_exams].course, exams[num_exams].exam_date) == 2) {
         num_exams++;
-        if (num_exams >= MAX_EXAMS) {
+        if (num_exams >= MAX_DATE) {
+            break;
+        }
+    }
+
+    fclose(file);
+}
+
+void load_reservation_from_file() {
+    FILE *file = fopen("reservations.txt", "r");
+    if (file == NULL) {
+        perror("Errore nell'apertura del file delle prenotazioni");
+        exit(EXIT_FAILURE);
+    }
+    prenot_index = 0;
+    while (fscanf(file, "%49s %19s", exams[num_exams].course, exams[num_exams].exam_date) == 2) {
+        prenot_index++;
+        if (prenot_index >= MAX_EXAM) {
             break;
         }
     }
@@ -51,7 +74,7 @@ void load_exams_from_file() {
 }
 
 void add_exam(SOCKET client_socket, const char* course, const char* date) {
-    if (num_exams < MAX_EXAMS) {
+    if (num_exams < MAX_DATE) {
         strcpy(exams[num_exams].course, course);
         strcpy(exams[num_exams].exam_date, date);
     }
@@ -74,24 +97,62 @@ void handle_exam_request(SOCKET client_socket,char* course) {
     write(client_socket, exam_dates, strlen(exam_dates));
 }
 
-void handle_exam_reservation(SOCKET client_socket, const char* course) {
+void handle_exam_reservation(SOCKET client_socket, const char* course, const char* date) {
     // Gestisci la prenotazione dell'esame (simulato)
     // Qui potresti implementare la logica di gestione delle prenotazioni effettive
     // Ad esempio, salva la prenotazione su un file
+    
+    int trovato = 0;
     char buffer[100];
-    FILE *reservation_file = fopen("reservations.txt", "a");
-    if (reservation_file == NULL) {
-        perror("\nErrore nell'apertura del file delle prenotazioni");
-        return;
+
+    for(int i = 0; i < MAX_DATE && trovato == 0; i++){
+        if(!strcmp(course, exams[i].course)){
+            printf("corso okay\n");
+            printf("%s\n, %lu", date,strlen(date));
+            printf("%s\n, %lu", exams[i].exam_date,strlen(exams[i].exam_date));
+            if(!strcmp(date, exams[i].exam_date)){
+                printf("data okay\n");
+                trovato = 1;
+            }
+        }
     }
-    kill(getppid(),SIGUSR1);
+    if(trovato == 1){
 
-    fprintf(reservation_file, "\nPrenotato %d ha prenotato l'esame di %s\n", *num_prenot_pt, course);
-    fclose(reservation_file);
+        FILE *reservation_file = fopen("reservations.txt", "r+");
+        if (reservation_file == NULL) {
+            perror("\nErrore nell'apertura del file delle prenotazioni");
+            return;
+        }
+        
+        int i;    
+        for(i = 0; i<prenot_index; i++) 
+            if(!strcmp(course, num_prenot[i].nome))
+                break;
 
-    snprintf(buffer,sizeof(buffer),"\nNumero prenotazione %d", *num_prenot_pt);
-    printf("Sending %lu",strlen(buffer));
-    FullWrite(client_socket,buffer, strlen(buffer));
+        if(i > prenot_index){
+            strcpy(num_prenot[i].nome, course);
+            num_prenot[i].numP = 1;
+        }
+        else
+            num_prenot[i].numP++; 
+
+
+        fprintf(reservation_file, "%s %d\n", course, num_prenot[i].numP);
+        fclose(reservation_file);
+
+        snprintf(buffer,sizeof(buffer),"Numero prenotazione %d", num_prenot[i].numP);
+        printf("Sending %lu",strlen(buffer));
+        FullWrite(client_socket,buffer, strlen(buffer));
+    }
+    else{
+
+        snprintf(buffer, sizeof(buffer),"\nNot found exam  %s for date %s\n", course, date);
+        printf("Sending %lu",strlen(buffer));
+        FullWrite(client_socket,buffer, strlen(buffer));
+    }
+    
+    
+    
 }
 
 void handle_exam_add(SOCKET client_socket){
@@ -104,7 +165,7 @@ void handle_exam_add(SOCKET client_socket){
     }
 
     // Verifica se c'è spazio sufficiente per aggiungere un esame
-    if (num_exams >= MAX_EXAMS) {
+    if (num_exams >= MAX_DATE) {
         fprintf(stderr, "\nErrore: Il numero massimo di esami è stato raggiunto\n");
         fclose(file);
         exit(EXIT_FAILURE);
@@ -124,8 +185,12 @@ void handle_exam_add(SOCKET client_socket){
 }
 
 int main(){
-    signal(SIGUSR1,handler);
+
+    // Creazione di memoria condivisa per l'array di interi (val[10])
+    num_prenot = mmap(NULL, sizeof(numPrenot) * MAX_EXAM, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
     load_exams_from_file();
+    load_reservation_from_file();
     printf("loaded exams from file\n");
  
     SOCKET server_socket, client_socket;
@@ -216,9 +281,13 @@ int main(){
                 handle_exam_request(client_socket,course);
 
             } else if (strcmp(request_type, "RESERVE_EXAM") == 0) {
-
+                
+                bytes_read2 = read(client_socket, date, sizeof(date));
+                date[bytes_read2] = '\0';
+                printf("\ndata: %s \n", date);
+                
                 // Gestisci la prenotazione dell'esame
-                handle_exam_reservation(client_socket,course);
+                handle_exam_reservation(client_socket,course, date);
 
             }else if(strcmp(request_type, "ADD_EXAM") == 0){
 
@@ -240,6 +309,8 @@ int main(){
 
     // Chiudi il socket del server
     close(server_socket);
+    
+    munmap(num_prenot, sizeof(numPrenot) * MAX_EXAM); // Deallocazione della memoria condivisa
 
     return 0;
 }
