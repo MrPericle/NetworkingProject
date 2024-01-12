@@ -32,28 +32,23 @@ int Connect(int socket, const struct sockaddr *servaddr, socklen_t address_len)
     }
 }
 
-
 // Funzione per associare un indirizzo locale a un socket.
-int Bind(int socket, const struct sockaddr *servaddr, socklen_t address_len)
+void Bind(int socket, const struct sockaddr *servaddr, socklen_t address_len)
 {
     if (bind(socket, servaddr, address_len) < 0) {
-        perror("bind"); // Stampa un messaggio di errore e la descrizione dell'errore corrispondente.
-        return -1; // Indica un errore nella bind.
+        perror("Errore nella bind del socket del server"); // Stampa un messaggio di errore e la descrizione dell'errore corrispondente.
+        exit(1); // Uscita forzata del programma in caso di errore.
     }
-    return 0; // Indica che la bind è stata eseguita con successo.
 }
-
 
 // Funzione per mettere in ascolto un socket.
-int Listen(int socket, int backlog)
+void Listen(int socket, int backlog)
 {
     if (listen(socket, backlog) < 0) {
-        perror("listen"); // Stampa un messaggio di errore e la descrizione dell'errore corrispondente.
-        return -1; // Indica un errore nella listen.
+        perror("Errore nella listen del socket del server"); // Stampa un messaggio di errore e la descrizione dell'errore corrispondente.
+        exit(1); // Uscita forzata del programma in caso di errore.
     }
-    return 0; // Indica che la listen è stata eseguita con successo.
 }
-
 
 // Funzione per accettare una connessione in entrata.
 int Accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len)
