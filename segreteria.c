@@ -47,7 +47,7 @@ void request_exam_dates(SOCKET student_socket, const char *course)
     close(client_socket);
 }
 
-void forward_exam_reservation(int student_socket, const char *course)
+void forward_exam_reservation(int student_socket, const char *course, const char *date)
 {
     // Forward the reservation request to the university server
     SOCKET client_socket = Socket(AF_INET, SOCK_STREAM, 0);
@@ -68,6 +68,8 @@ void forward_exam_reservation(int student_socket, const char *course)
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
     FullWrite(client_socket, course, strlen(course));
+    sleep(3);
+    FullWrite(client_socket, date, strlen(date));
 
     // Receive and forward the reservation confirmation to the student client
     char confirmation[100];
@@ -100,10 +102,10 @@ void add_exam(const char *course, const char *date)
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
 
-    FullWrite(client_socket, course, sizeof(course));
+    FullWrite(client_socket, course, strlen(course));
     sleep(3);
 
-    FullWrite(client_socket, date, sizeof(date));
+    FullWrite(client_socket, date, strlen(date));
 
     // Receive confirmation of successful addition
     char confirmation[100];
@@ -123,7 +125,10 @@ void add_exam(const char *course, const char *date)
 }
 
 int main()
-{
+{   
+    char course[100];
+    char date[100];
+    int choice;
     SOCKET server_socket, client_socket;
     struct sockaddr_in server_address, client_address;
     socklen_t client_address_len = sizeof(client_address);
@@ -149,8 +154,8 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // Start listening for incoming connections
-    if (Listen(server_socket, 1) == -1)
+    // Inizia ad ascoltare le connessioni in entrata
+    if (listen(server_socket, 1) == -1)
     {
         perror("Error in listening on the server socket");
         exit(EXIT_FAILURE);
@@ -179,6 +184,7 @@ int main()
             // Read the type of request from the student
             char request_type[30];
             char course[100];
+            char date[50];
             ssize_t bytes_read;
 
             // Read the type of request
@@ -215,8 +221,8 @@ int main()
             else if (strcmp(request_type, "RESERVE_EXAM") == 0)
             {
 
-                // Receive the course for reservation and forward it to the university server
-                printf("Request 2 sent\n");
+                // Ricevi il corso per la prenotazione e inoltralo al server universitario
+                printf("request 2 sent\n");
                 forward_exam_reservation(client_socket, course);
             }
             else
@@ -225,8 +231,8 @@ int main()
                 exit(EXIT_FAILURE);
             }
 
-            // Close the connection with the current student
-            close(client_socket);
+            // Chiudi la connessione con lo studente corrente
+            //close(client_socket);
             exit(EXIT_SUCCESS);
         }
         else
@@ -241,15 +247,15 @@ int main()
 
                 while (1)
                 {
-                    printf("\nDo you want to add a new exam?\n [Y/n]: ");
-                    scanf(" %c", &choice);
+                    printf("\nVuoi Inserire un nuovo esame?\n [Y/n]: ");
+                    scanf("%c", &choice);
 
                     if (choice == 'y')
                     {
-                        printf("\nEnter the exam: ");
+                        printf("\nInserisci l'esame: ");
                         scanf("%s", course);
 
-                        printf("\nEnter the date in DD/MM/YY format: ");
+                        printf("\nInserisci la data nel formato DD/MM/YY: ");
                         scanf("%s", date);
 
                         add_exam(course, date);

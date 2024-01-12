@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 Reservation 1 has booked the exam for ASD
 
 Reservation 2 has booked the exam for ASD
 
 Reservation 1 has booked the exam for Reti
+=======
+Economia 2
+ASD 1
+Matematica 1
+>>>>>>> 2f721f2bece0133deb5dc6955af1d427ef94d1df

@@ -67,8 +67,12 @@ void request_exam_availability(char course[]) {
     close(client_socket);
 }
 
+<<<<<<< HEAD
 
 void reserve_exam(const char* course) {
+=======
+void reserve_exam(const char* course, const char* date) {
+>>>>>>> 2f721f2bece0133deb5dc6955af1d427ef94d1df
     SOCKET client_socket;
     int byte_read = 0;
 
@@ -78,6 +82,8 @@ void reserve_exam(const char* course) {
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
     FullWrite(client_socket, course, strlen(course));
+    sleep(3);
+    FullWrite(client_socket, date, strlen(date));
 
     char confirmation[100];
     byte_read =  read(client_socket, confirmation, sizeof(confirmation));
@@ -89,7 +95,8 @@ void reserve_exam(const char* course) {
 
 int main() {
     int choice;
-    
+    char course[50];
+    char date[20];
     while(1){
         printf("\n\n1. Request Exam Availability: \n");
         printf("2. Reserve Exam\n");
@@ -98,6 +105,7 @@ int main() {
 
         switch (choice) {
             case 1: {
+<<<<<<< HEAD
                 char course_to_check[50];
                 printf("\nEnter exam name: ");
                 scanf("%s",course_to_check);
@@ -109,6 +117,19 @@ int main() {
                 printf("\nEnter exam name: ");
                 scanf("%s",course_to_reserve);
                 reserve_exam(course_to_reserve);
+=======
+                printf("\nInserisci nome esame: ");
+                scanf("%s",course);
+                request_exam_availability(course);
+                break;
+            }
+            case 2: {
+                printf("\nInserisci il nome dell'esame: ");
+                scanf("%s",course);
+                printf("\nInserisci data formato DD/MM/YY: ");
+                scanf("%s", date);
+                reserve_exam(course, date);
+>>>>>>> 2f721f2bece0133deb5dc6955af1d427ef94d1df
                 break;
             }
             default:
