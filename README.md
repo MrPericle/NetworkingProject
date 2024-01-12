@@ -1,22 +1,22 @@
 # Networking Project
 The project aims to develop a parallel client/server application to manage university exams. The outline involves the creation of three groups of students, each responsible for a specific part of the application.
 
-# Manuale Utente per Compilazione ed Esecuzione
+# User Manual for Compilation and Execution
 
-## Clone della Repository
+## Clone the Repository
 
-Per ottenere il codice sorgente del progetto, è necessario clonare la repository da GitHub. Utilizzare il seguente comando da terminale:
+To obtain the project's source code, you need to clone the repository from GitHub. Use the following terminal command:
 
 ```
  git clone https://github.com/MrPericle/NetworkingProject.git
 ```
-Successivamente, spostarsi nella directory appena clonata tramite il comando:
+Next, navigate to the newly cloned directory using the command:
 ```
  cd NetworkingProject
 ```
 
-## Compilazione
-Il progetto è composto da tre file eseguibili distinti: **serverUniversitario**, **segreteria**, e **client**. Ogni file deve essere compilato separatamente, come indicato di seguito:
+## Compilation
+The project consists of three distinct executable files: **serverUniversitario**, **segreteria**, and **client**. Each file must be compiled separately, as indicated below:
 
 - **Server Universitario**:
 ```
@@ -32,8 +32,8 @@ Il progetto è composto da tre file eseguibili distinti: **serverUniversitario**
 
 ```
 
-## Esecuzione
-Dopo la compilazione, eseguire gli eseguibili nell'ordine seguente:
+## Execution
+After compilation, run the executables in the following order:
 
 - **Server Universitario**:
 ```
@@ -48,23 +48,22 @@ Dopo la compilazione, eseguire gli eseguibili nell'ordine seguente:
  ./client
 ```
 
-## Funzionalità
-Una volta avviati i componenti, il server universitario rimarrà in ascolto. Le funzionalità principali della segreteria e dello studente sono le seguenti:
+## Features
+Once the components are started, the university server will remain listening. The main functionalities of the segreteria and student are as follows:
 
 ### Segreteria:
-1. Inserisce gli esami sul server dell'università.
-2. Inoltra le richieste di prenotazione degli studenti al server universitario.
-3. Fornisce allo studente le date degli esami disponibili per il corso selezionato.
-   
-### Studente:
-1. Chiede alla segreteria se ci sono esami disponibili per un determinato corso.
-2. Invia una richiesta di prenotazione di un esame alla segreteria.
+1. Inserts exams into the university server.
+2. Forwards student reservation requests to the university server.
+3. Provides the student with available exam dates for the selected course.
 
-## Funzionalità aggiuntive
-- Il server universitario, ad ogni richiesta di prenotazione, invia alla segreteria il numero di prenotazione progressivo assegnato allo studente, e la segreteria lo inoltra allo studente.
+### Student:
+1. Asks the segreteria if there are available exams for a specific course.
+2. Sends a reservation request for an exam to the segreteria.
 
-- Se la segreteria non risponde alla richiesta dello studente, questo dovrà ritentare la connessione per 3 volte. Se le richieste continuano a fallire, allora aspetterà un periodo di tempo casuale e riproverà. Questo simula un timeout della segreteria, testando l'attesa casuale.
+## Additional Features
+- The university server, for each reservation request, sends the segreteria the sequentially assigned reservation number for the student, and the segreteria forwards it to the student.
 
+- If the segreteria does not respond to the student's request, the student must retry the connection three times. If the requests continue to fail, the student will wait for a random period and try again. This simulates a timeout of the segreteria, testing random wait times.
 
 # Development Notes
 - **Programming language:** C
@@ -74,9 +73,4 @@ Una volta avviati i componenti, il server universitario rimarrà in ascolto. Le 
 # Documentation
 A detailed report explaining the implementation aspects is available:
 
- - ...
-
-# Contributions
-- **Camilla De Martino:** [Insert contributions]
-- **Lorenzo Pergmao:** [Insert contributions]
-- **Carmine Coppola:** [Insert contributions]
+ - ... PDF
