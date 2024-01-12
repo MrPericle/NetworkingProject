@@ -1,9 +1,7 @@
 Matematica 02/05/23
 ASD 12/12/23
 Sistemi 04/01/24
-Economia 12/05/22
-Reti 25/05/21
-Reti2 21/07/07
-Architet 31/05/23
-Pole 22/06/11
-pappa 34/05/28
+Economia 12/05/22
+Reti 25/05/21
+Economia 23/03/22
+Ingegneria 02/01/23

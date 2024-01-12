@@ -63,7 +63,9 @@ void load_reservation_from_file() {
         exit(EXIT_FAILURE);
     }
     prenot_index = 0;
-    while (fscanf(file, "%49s %19s", exams[num_exams].course, exams[num_exams].exam_date) == 2) {
+    char arr[15];
+    while (fscanf(file, "%49s %19s", num_prenot[prenot_index].nome, arr) == 2) {
+        num_prenot[prenot_index].numP = atoi(arr);
         prenot_index++;
         if (prenot_index >= MAX_EXAM) {
             break;
@@ -104,40 +106,47 @@ void handle_exam_reservation(SOCKET client_socket, const char* course, const cha
     
     int trovato = 0;
     char buffer[100];
+    load_reservation_from_file();
 
     for(int i = 0; i < MAX_DATE && trovato == 0; i++){
         if(!strcmp(course, exams[i].course)){
-            printf("corso okay\n");
-            printf("%s\n, %lu", date,strlen(date));
-            printf("%s\n, %lu", exams[i].exam_date,strlen(exams[i].exam_date));
             if(!strcmp(date, exams[i].exam_date)){
-                printf("data okay\n");
                 trovato = 1;
             }
         }
     }
     if(trovato == 1){
 
-        FILE *reservation_file = fopen("reservations.txt", "r+");
+        FILE *reservation_file = fopen("reservations.txt", "w");
         if (reservation_file == NULL) {
             perror("\nErrore nell'apertura del file delle prenotazioni");
             return;
         }
-        
+        fclose(reservation_file);
+
+        reservation_file = fopen("reservations.txt", "a");
+
         int i;    
-        for(i = 0; i<prenot_index; i++) 
+        for(i = 0; i < prenot_index; i++) 
             if(!strcmp(course, num_prenot[i].nome))
                 break;
 
-        if(i > prenot_index){
+        if(i >= prenot_index){
             strcpy(num_prenot[i].nome, course);
             num_prenot[i].numP = 1;
+            prenot_index++;
         }
         else
             num_prenot[i].numP++; 
 
 
-        fprintf(reservation_file, "%s %d\n", course, num_prenot[i].numP);
+        for(int j = 0; j < prenot_index; j++){
+            printf("Indez %d\n", prenot_index);
+            printf("Nome %s, Num %d\n", num_prenot[j].nome, num_prenot[j].numP);
+            fprintf(reservation_file, "%s %d\n", num_prenot[j].nome, num_prenot[j].numP);
+        }
+
+        
         fclose(reservation_file);
 
         snprintf(buffer,sizeof(buffer),"Numero prenotazione %d", num_prenot[i].numP);
@@ -292,6 +301,7 @@ int main(){
             }else if(strcmp(request_type, "ADD_EXAM") == 0){
 
                 bytes_read2 = read(client_socket, date, sizeof(date));
+                date[bytes_read2] = '\0';
                 printf("\ndata: %s \n", date);
                 add_exam(client_socket, course, date);
 

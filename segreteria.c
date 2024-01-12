@@ -104,10 +104,10 @@ void add_exam(const char *course, const char *date)
     FullWrite(client_socket, request_type, sizeof(request_type));
     sleep(3);
 
-    FullWrite(client_socket, course, sizeof(course));
+    FullWrite(client_socket, course, strlen(course));
     sleep(3);
 
-    FullWrite(client_socket, date, sizeof(date));
+    FullWrite(client_socket, date, strlen(date));
 
     // Ricevi conferma dell'aggiunta con successo
     char confirmation[100];
@@ -156,15 +156,9 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    // Inizia ad ascoltare le connessioni in entrata
-    if (listen(server_socket, 1) == -1)
-    {
-        perror("Errore nella listen del socket del server");
-        exit(EXIT_FAILURE);
-    }
 
     printf("\nEnter ...\n");
-    printf("1.Add new exam \n");
+    printf("1. Add new exam \n");
     printf("2. Listen to the student\n");
     printf("Enter your choice: ");
     scanf("%d", &choice);
@@ -186,6 +180,13 @@ int main()
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
+    }
+
+    // Inizia ad ascoltare le connessioni in entrata
+    if (listen(server_socket, 1) == -1)
+    {
+        perror("Errore nella listen del socket del server");
+        exit(EXIT_FAILURE);
     }
 
     while (1)

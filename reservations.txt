@@ -1,5 +1,3 @@
-
-
-Prenotato 1 ha prenotato l'esame di Sistemi
-
-Prenotato 2 ha prenotato l'esame di Sistemi
+Economia 2
+ASD 1
+Matematica 1
