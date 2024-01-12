@@ -36,7 +36,7 @@ void handle_exam_add(SOCKET);
 void load_exams_from_file() {
     FILE *file = fopen("exams.txt", "r");
     if (file == NULL) {
-        perror("Errore nell'apertura del file degli esami");
+        perror("\nError opening the exams file.");
         exit(EXIT_FAILURE);
     }
 
@@ -59,19 +59,27 @@ void add_exam(SOCKET client_socket, const char* course, const char* date) {
     handle_exam_add(client_socket);
 }
 
-void handle_exam_request(SOCKET client_socket,char* course) {
-    // Invia al client le date degli esami disponibili 
+void handle_exam_request(SOCKET client_socket, const char* course) {
+    // Cerca le date degli esami disponibili 
     char exam_dates[500] = "";
+    int exam_found = 0;
+
     for (int i = 0; i < num_exams; ++i) {
-        if(strcmp(exams[i].course,course) == 0){
-            strcat(exam_dates, exams[i].course);
-            strcat(exam_dates, ": ");
-            strcat(exam_dates, exams[i].exam_date);
-            strcat(exam_dates, "\n");
+        if (strcmp(exams[i].course, course) == 0) {
+            snprintf(exam_dates + strlen(exam_dates), sizeof(exam_dates) - strlen(exam_dates), "%s: %s\n", exams[i].course, exams[i].exam_date);
+            exam_found = 1;
+            // Interrompi la ricerca una volta trovata la corrispondenza
+            break;
         }
     }
-    write(client_socket, exam_dates, strlen(exam_dates));
+
+    if (exam_found) {
+        FullWrite(client_socket, exam_dates, strlen(exam_dates));
+    } else {
+        FullWrite(client_socket, "EXAM_NOT_FOUND", sizeof("EXAM_NOT_FOUND"));
+    }
 }
+
 
 void handle_exam_reservation(SOCKET client_socket, const char* course) {
     // Gestisci la prenotazione dell'esame (simulato)
@@ -80,15 +88,15 @@ void handle_exam_reservation(SOCKET client_socket, const char* course) {
     char buffer[100];
     FILE *reservation_file = fopen("reservations.txt", "a");
     if (reservation_file == NULL) {
-        perror("\nErrore nell'apertura del file delle prenotazioni");
+        perror("\nError opening the reservations file.");
         return;
     }
     kill(getppid(),SIGUSR1);
 
-    fprintf(reservation_file, "\nPrenotato %d ha prenotato l'esame di %s\n", *num_prenot_pt, course);
+    fprintf(reservation_file, "\nReservation %d has booked the exam for %s\n", *num_prenot_pt, course);
     fclose(reservation_file);
 
-    snprintf(buffer,sizeof(buffer),"\nNumero prenotazione %d", *num_prenot_pt);
+    snprintf(buffer,sizeof(buffer),"\nReservation Number %d", *num_prenot_pt);
     printf("Sending %lu",strlen(buffer));
     FullWrite(client_socket,buffer, strlen(buffer));
 }
@@ -98,13 +106,13 @@ void handle_exam_add(SOCKET client_socket){
     //aggiungi esame al file
     FILE *file = fopen("exams.txt", "a");
     if (file == NULL) {
-        perror("Errore nell'apertura del file degli esami");
+        perror("Error opening the exams file.");
         exit(EXIT_FAILURE);
     }
 
     // Verifica se c'è spazio sufficiente per aggiungere un esame
     if (num_exams >= MAX_EXAMS) {
-        fprintf(stderr, "\nErrore: Il numero massimo di esami è stato raggiunto\n");
+        fprintf(stderr, "\nError: The maximum number of exams has been reached.\n");
         fclose(file);
         exit(EXIT_FAILURE);
     }
@@ -115,128 +123,125 @@ void handle_exam_add(SOCKET client_socket){
     // Incrementa il numero di esami e chiudi il file
     num_exams++;
 
-    write(client_socket, "\nEsame aggiunto con successo!\0", 30);
+    FullWrite(client_socket, "\n- Exam added successfully!\0", 30);
 
     fclose(file);
 
 }
 
-int main(){
-    signal(SIGUSR1,handler);
+int main() {
+    signal(SIGUSR1, handler);
     load_exams_from_file();
-    printf("loaded exams from file\n");
- 
+    printf("Loaded exams from file...\n");
+
     SOCKET server_socket, client_socket;
     struct sockaddr_in server_address, client_address;
     socklen_t client_address_len = sizeof(client_address);
 
-    // Inizializza il socket
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    // Initialize the socket
+    server_socket = Socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
-        perror("Errore nella creazione del socket");
+        perror("Error in creating the socket.");
         exit(EXIT_FAILURE);
     }
 
-    // Configura l'indirizzo del server
+    // Configure the server address
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(PORT);
 
-    // Associa il socket all'indirizzo e alla porta
-    if (bind(server_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
-        perror("Errore nell'associazione del socket all'indirizzo e alla porta");
+    // Bind the socket to the address and port
+    if (Bind(server_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
+        perror("\nError in binding the socket to the address and port.");
         exit(EXIT_FAILURE);
     }
 
-    // Mette il server in ascolto
-    if (listen(server_socket, MAX_CONNECTIONS) == -1) {
-        perror("Errore nell'inizializzazione dell'ascolto del socket");
+    // Put the server in listening mode
+    if (Listen(server_socket, MAX_CONNECTIONS) == -1) {
+        perror("\nError in initializing the socket listening.");
         exit(EXIT_FAILURE);
     }
 
-    printf("Server in ascolto sulla porta %d...\n", PORT);
+    printf("\nServer listening on port %d...\n", PORT);
 
     while (1) {
-        // Accetta una connessione
-        client_socket = accept(server_socket, (struct sockaddr*)&client_address, &client_address_len);
+        // Accept a connection
+        client_socket = Accept(server_socket, (struct sockaddr*)&client_address, &client_address_len);
         if (client_socket == -1) {
-            perror("Errore nell'accettazione della connessione");
+            perror("Error in accepting the connection");
             continue;
         }
 
-        // Fork per gestire la connessione
+        // Fork to handle the connection
         pid_t pid = fork();
         if (pid == -1) {
-            perror("Errore nella creazione del processo figlio");
+            perror("Error in creating the child process");
             close(client_socket);
             continue;
         } else if (pid > 0) {
             wait(NULL);
-            // Processo padre - chiude il socket del client e continua ad accettare nuove connessioni
+            // Parent process - close the client socket and continue accepting new connections
             close(client_socket);
         } else {
-            close(server_socket); // Il processo figlio non ha bisogno del socket del server
-            printf("child handling request\n");
-            // Processo figlio - gestisce la connessione
+            close(server_socket); // The child process doesn't need the server socket
+            printf("Child handling request\n");
+            // Child process - handle the connection
 
-            // Ricevi il tipo di richiesta dal client
+            // Receive the request type from the client
             char request_type[30];
             char course[100];
             char date[100];
             ssize_t bytes_read;
             ssize_t bytes_read2;
 
-            // Leggi il tipo di richiesta
+            // Read the request type
             bytes_read = read(client_socket, request_type, sizeof(request_type));
-            if(!bytes_read){
-                printf("client closed connection\n");
+            if (!bytes_read) {
+                printf("Client closed connection\n");
                 close(client_socket);
-            }
-            else{
+            } else {
                 request_type[bytes_read] = '\0';
                 printf("\nReading request type %s\n", request_type);
-            } 
-
-            // Leggi il corso
-            bytes_read = read(client_socket, course, sizeof(course));
-            if(!bytes_read){
-                printf("client closed connection\n");
-                close(client_socket);
             }
-            else {
+
+            // Read the course
+            bytes_read = read(client_socket, course, sizeof(course));
+            if (!bytes_read) {
+                printf("Client closed connection\n");
+                close(client_socket);
+            } else {
                 course[bytes_read] = '\0';
                 printf("\nReading course: %s\n", course);
-                
             };
+
             if (strcmp(request_type, "REQUEST_EXAM_DATES") == 0) {
 
-                // Gestisci la richiesta di date degli esami
-                handle_exam_request(client_socket,course);
+                // Handle the request for exam dates
+                handle_exam_request(client_socket, course);
 
             } else if (strcmp(request_type, "RESERVE_EXAM") == 0) {
 
-                // Gestisci la prenotazione dell'esame
-                handle_exam_reservation(client_socket,course);
+                // Handle the exam reservation
+                handle_exam_reservation(client_socket, course);
 
-            }else if(strcmp(request_type, "ADD_EXAM") == 0){
+            } else if (strcmp(request_type, "ADD_EXAM") == 0) {
 
                 bytes_read2 = read(client_socket, date, sizeof(date));
-                printf("\ndata: %s \n", date);
+                printf("\nData: %s \n", date);
                 add_exam(client_socket, course, date);
 
-            }
-            else{
+            } else {
                 perror("\nRequest unknown");
                 exit(EXIT_FAILURE);
             }
 
-            // Chiudi la connessione con il client corrente
+            // Close the connection with the current client
             close(client_socket);
-            exit(EXIT_SUCCESS); // Termina il processo figlio
+            exit(EXIT_SUCCESS); // Terminate the child process
         }
     }
 
-    // Chiudi il socket del server
+    // Close the server socket
     close(server_socket);
 
     return 0;

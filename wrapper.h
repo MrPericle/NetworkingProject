@@ -5,13 +5,13 @@
 int Socket(int family, int type, int protocol);
 
 // Prototipo della funzione wrapper per connettersi a un server remoto.
-void Connect(int socket, const struct sockaddr *address, socklen_t address_len);
+int Connect(int socket, const struct sockaddr *address, socklen_t address_len);
 
 // Prototipo della funzione wrapper per associare un indirizzo locale a un socket.
-void Bind(int socket, const struct sockaddr *address, socklen_t address_len);
+int Bind(int socket, const struct sockaddr *address, socklen_t address_len);
 
 // Prototipo della funzione wrapper per mettere in ascolto un socket.
-void Listen(int socket, int backlog);
+int Listen(int socket, int backlog);
 
 // Prototipo della funzione wrapper per accettare una connessione in entrata.
 int Accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len);

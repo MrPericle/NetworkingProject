@@ -21,31 +21,39 @@ int Socket(int family, int type, int protocol)
 }
 
 // Funzione per connettersi a un server remoto.
-void Connect(int socket, const struct sockaddr *servaddr, socklen_t address_len)
+int Connect(int socket, const struct sockaddr *servaddr, socklen_t address_len)
 {
     if (connect(socket, servaddr, address_len) < 0) {
-        fprintf(stderr, "connect error\n"); // Stampa un messaggio di errore su stderr.
-        exit(1); // Uscita forzata del programma in caso di errore.
+        fprintf(stderr, "Connection failed, retrying...\n"); // Stampa un messaggio di errore su stderr.
+        return -1; // Indica un errore di connessione.
+    } else {
+        printf("Connection established\n");
+        return 0; // Indica che la connessione è stata stabilita con successo.
     }
 }
 
+
 // Funzione per associare un indirizzo locale a un socket.
-void Bind(int socket, const struct sockaddr *servaddr, socklen_t address_len)
+int Bind(int socket, const struct sockaddr *servaddr, socklen_t address_len)
 {
     if (bind(socket, servaddr, address_len) < 0) {
         perror("bind"); // Stampa un messaggio di errore e la descrizione dell'errore corrispondente.
-        exit(1); // Uscita forzata del programma in caso di errore.
+        return -1; // Indica un errore nella bind.
     }
+    return 0; // Indica che la bind è stata eseguita con successo.
 }
 
+
 // Funzione per mettere in ascolto un socket.
-void Listen(int socket, int backlog)
+int Listen(int socket, int backlog)
 {
     if (listen(socket, backlog) < 0) {
         perror("listen"); // Stampa un messaggio di errore e la descrizione dell'errore corrispondente.
-        exit(1); // Uscita forzata del programma in caso di errore.
+        return -1; // Indica un errore nella listen.
     }
+    return 0; // Indica che la listen è stata eseguita con successo.
 }
+
 
 // Funzione per accettare una connessione in entrata.
 int Accept(int socket, struct sockaddr *restrict address, socklen_t *restrict address_len)

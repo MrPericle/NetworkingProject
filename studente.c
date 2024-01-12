@@ -13,6 +13,7 @@
 #define SOCKET int
 #define MAX_RETRY 3
 
+
 void establish_connection(SOCKET *client_socket) {
     int attempt = 0;
 
@@ -23,8 +24,9 @@ void establish_connection(SOCKET *client_socket) {
         server_address.sin_addr.s_addr = inet_addr(SERVER_IP);
         server_address.sin_port = htons(PORT);
 
-        if (connect(*client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == -1) {
-            printf("Connection failed, retrying...\n");
+        if (Connect(*client_socket, (struct sockaddr*)&server_address, sizeof(server_address)) == 0)            
+            break;
+        else {
             close(*client_socket);
             attempt++;
 
@@ -36,9 +38,6 @@ void establish_connection(SOCKET *client_socket) {
                 // Reset attempts
                 attempt = 0;
             }
-        } else {
-            printf("Connection established\n");
-            break;
         }
     }
 }
@@ -57,16 +56,17 @@ void request_exam_availability(char course[]) {
 
     char exam_dates[500];
     byte_read = read(client_socket, exam_dates, sizeof(exam_dates));
-    if (byte_read == 0)
+    exam_dates[byte_read] = '\0';
+
+    if (strcmp(exam_dates, "EXAM_NOT_FOUND") == 0) {
         printf("No available exam dates for %s\n", course);
-    else if (byte_read > 0) {
-        exam_dates[byte_read] = '\0';
+    } else {
         printf("Available exam dates for %s:\n%s", course, exam_dates);
-    } else
-        perror("Read error");
+    }
 
     close(client_socket);
 }
+
 
 void reserve_exam(const char* course) {
     SOCKET client_socket;
@@ -99,23 +99,24 @@ int main() {
         switch (choice) {
             case 1: {
                 char course_to_check[50];
-                printf("\nInserisci nome esame: ");
+                printf("\nEnter exam name: ");
                 scanf("%s",course_to_check);
                 request_exam_availability(course_to_check);
                 break;
             }
             case 2: {
                 char course_to_reserve[50];
-                printf("\nInserisci il nome dell'esame: ");
+                printf("\nEnter exam name: ");
                 scanf("%s",course_to_reserve);
                 reserve_exam(course_to_reserve);
                 break;
             }
             default:
-                printf("Invalid choice\n");
+                printf("\n** Sorry, this choiche is invalid **\n");
                 break;
         }
     }
 
     return 0;
 }
+

@@ -1,5 +1,5 @@
+Reservation 1 has booked the exam for ASD
 
+Reservation 2 has booked the exam for ASD
 
-Prenotato 1 ha prenotato l'esame di Sistemi
-
-Prenotato 2 ha prenotato l'esame di Sistemi
+Reservation 1 has booked the exam for Reti
