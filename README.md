@@ -56,7 +56,7 @@ Once the components are started, the university server will remain listening. Th
 2. Forwards student reservation requests to the university server.
 3. Provides the student with available exam dates for the selected course.
 
-### Student:
+### Studente:
 1. Asks the segreteria if there are available exams for a specific course.
 2. Sends a reservation request for an exam to the segreteria.
 
@@ -70,7 +70,13 @@ Once the components are started, the university server will remain listening. Th
 - **Platform:** Unix-like
 - **Use of sockets**
 
+# Known Bugs
+It might occur that, due to the optimization performed by the gcc compiler for MacOs, responses are slower compared to Linux. This behavior is specific to the compiler's optimization for the MacOs operating system.
+
+It's essential to note that this phenomenon is not necessarily an intrinsic error in the code or the program itself but rather a nuance in compiler optimization for different operating systems. The performance difference can be attributed to the specifics of the compiler implementation on MacOs and does not represent a malfunction in the program per se.
+
 # Documentation
 A detailed report explaining the implementation aspects is available:
 
- - ... PDF
+ - [Università_Relazione.pdf](https://github.com/MrPericle/NetworkingProject/files/13928363/Universita_Relazione.pdf)
+
