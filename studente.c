@@ -58,10 +58,10 @@ void request_exam_availability(char course[]) {
     char exam_dates[500];
     byte_read = read(client_socket, exam_dates, sizeof(exam_dates));
     if (byte_read == 0)
-        printf("No available exam dates for %s\n", course);
+        printf("** No available exam dates for %s **\n", course);
     else if (byte_read > 0) {
         exam_dates[byte_read] = '\0';
-        printf("Available exam dates for %s:\n%s", course, exam_dates);
+        printf("\nAvailable exam dates for %s:\n%s", course, exam_dates);
     } else
         perror("Read error");
 
@@ -84,7 +84,7 @@ void reserve_exam(const char* course, const char* date) {
     char confirmation[100];
     byte_read =  read(client_socket, confirmation, sizeof(confirmation));
     confirmation[byte_read] = '\0';
-    printf("Reservation confirmation: %s", confirmation);
+    printf("\n Reservation confirmation: %s ", confirmation);
 
     close(client_socket);
 }
@@ -93,25 +93,36 @@ int main() {
     int choice;
     char course[50];
     char date[20];
+    printf("\n Welcome to the University Portal \n");
     while(1){
-        printf("\n\n1. Request Exam Availability: \n");
-        printf("2. Reserve Exam\n");
+        printf("\n*********************************\n");
+        printf("*                               *\n");
+        printf("*  1. Request Exam Availability *\n");
+        printf("*  2. Reserve Exam              *\n");
+        printf("*  3. Exit                      *\n");
+        printf("*                               *\n");
+        printf("********************************\n");
         printf("Enter your choice: ");
+
         scanf("%d", &choice);
 
         switch (choice) {
             case 1: {
-                printf("\nInserisci nome esame: ");
+                printf("\n\n - Enter exam name: ");
                 scanf("%s",course);
                 request_exam_availability(course);
                 break;
             }
             case 2: {
-                printf("\nInserisci il nome dell'esame: ");
+                printf("\n - Enter exam name: ");
                 scanf("%s",course);
-                printf("\nInserisci data formato DD/MM/YY: ");
+                printf("\n - Enter date in DD/MM/YY format:");
                 scanf("%s", date);
                 reserve_exam(course, date);
+                break;
+            }
+            case 3: {
+                // Exit option
                 break;
             }
             default:
